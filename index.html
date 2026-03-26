@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="description" content="Go Goal Analyzer — Analyse statistique des probabilités" />
+  <title>Go Goal Analyzer</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #111118;
+      --bg3: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #00e5a0;
+      --accent2: #ff4d6d;
+      --accent3: #ffd60a;
+      --text: #e8e8f0;
+      --muted: #666680;
+      --card: #13131e;
+      --glow: rgba(0,229,160,0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 32px 0 24px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent), #00b37a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 24px var(--glow);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .disclaimer {
+      background: rgba(255,77,109,0.08);
+      border: 1px solid rgba(255,77,109,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 11px;
+      color: #ff8099;
+      line-height: 1.6;
+      margin: 16px 0 28px;
+      text-align: left;
+    }
+
+    .disclaimer strong { color: var(--accent2); }
+
+    /* Section titles */
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Grid selector */
+    .grid-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .grid-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .grid-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .grid-btn.active {
+      border-color: var(--accent);
+      background: rgba(0,229,160,0.08);
+      color: var(--accent);
+      box-shadow: 0 0 16px var(--glow);
+    }
+
+    .grid-btn .size {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .grid-btn .label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    /* Game grid */
+    .grid-wrapper {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 28px;
+    }
+
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .grid-info {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 6px;
+    }
+
+    .mode-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--muted);
+    }
+
+    .mode-btn.active-ball {
+      background: rgba(0,229,160,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mode-btn.active-mine {
+      background: rgba(255,77,109,0.1);
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    #game-grid {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: var(--bg2);
+      overflow: hidden;
+    }
+
+    .cell:hover {
+      border-color: var(--accent);
+      transform: scale(1.04);
+    }
+
+    .cell.ball {
+      background: rgba(0,229,160,0.12);
+      border-color: var(--accent);
+      box-shadow: inset 0 0 12px rgba(0,229,160,0.1);
+    }
+
+    .cell.mine {
+      background: rgba(255,77,109,0.12);
+      border-color: var(--accent2);
+      box-shadow: inset 0 0 12px rgba(255,77,109,0.1);
+    }
+
+    /* Heatmap overlay */
+    .cell .heat {
+      position: absolute;
+      inset: 0;
+      border-radius: 7px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .cell .prob-label {
+      position: absolute;
+      bottom: 3px;
+      right: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    /* Action buttons */
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      grid-column: 1 / -1;
+    }
+
+    .btn-primary:hover {
+      background: #00ffb3;
+      box-shadow: 0 0 24px var(--glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-danger {
+      background: rgba(255,77,109,0.1);
+      color: var(--accent2);
+      border: 1px solid rgba(255,77,109,0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255,77,109,0.2);
+    }
+
+    /* Analysis results */
+    .analysis-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 28px;
+      display: none;
+    }
+
+    .analysis-panel.visible { display: block; }
+
+    .confidence-bar {
+      margin-bottom: 16px;
+    }
+
+    .conf-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .conf-track {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .conf-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .top-cells {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .top-cell-card {
+      background: var(--bg3);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 11px;
+    }
+
+    .top-cell-card .cell-pos {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .top-cell-card.safe .cell-pos { color: var(--accent); }
+    .top-cell-card.risky .cell-pos { color: var(--accent2); }
+
+    /* History */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: var(--bg3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .history-balls { color: var(--accent); }
+    .history-mines { color: var(--accent2); }
+
+    .history-delete {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .history-delete:hover { color: var(--accent2); }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 32px;
+      line-height: 1.8;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--bg3);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 12px;
+      transition: transform 0.3s ease;
+      z-index: 100;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* PWA Install banner */
+    .install-banner {
+      background: rgba(0,229,160,0.06);
+      border: 1px solid rgba(0,229,160,0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    .install-banner.visible { display: flex; }
+    .install-banner button {
+      margin-left: auto;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚽</div>
+      <h1>Go Goal <span>Analyzer</span></h1>
+    </div>
+    <p class="subtitle">Analyse statistique · Probabilités bayésiennes</p>
+  </header>
+
+  <div class="install-banner" id="install-banner">
+    ⬇️ Installer l'app sur ton téléphone
+    <button id="install-btn">Installer</button>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠️ Avertissement :</strong> Ce jeu est basé sur un générateur aléatoire (RNG). Cette app calcule des <strong>fréquences statistiques</strong> sur tes parties passées — elle ne peut pas prédire les cases avec certitude. Utilise-la comme un outil d'analyse, pas comme une garantie.
+  </div>
+
+  <!-- Stats globales -->
+  <div class="section-title">Statistiques globales</div>
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value" id="stat-parties">0</div>
+      <div class="stat-label">Parties</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-ballons">—</div>
+      <div class="stat-label">Avg ballons</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-fiab">—</div>
+      <div class="stat-label">Fiabilité</div>
+    </div>
+  </div>
+
+  <!-- Sélection de grille -->
+  <div class="section-title">Type de grille</div>
+  <div class="grid-selector">
+    <button class="grid-btn active" data-rows="3" data-cols="4">
+      <span class="size">3×4</span>
+      <span class="label">12 cases</span>
+    </button>
+    <button class="grid-btn" data-rows="4" data-cols="7">
+      <span class="size">4×7</span>
+      <span class="label">28 cases</span>
+    </button>
+    <button class="grid-btn" data-rows="5" data-cols="10">
+      <span class="size">5×10</span>
+      <span class="label">50 cases</span>
+    </button>
+  </div>
+
+  <!-- Grille de jeu -->
+  <div class="grid-wrapper">
+    <div class="grid-header">
+      <span class="grid-info" id="grid-info">Clique pour marquer les cases</span>
+      <div class="mode-toggle">
+        <button class="mode-btn active-ball" id="mode-ball" onclick="setMode('ball')">⚽ Ballon</button>
+        <button class="mode-btn" id="mode-mine" onclick="setMode('mine')">💣 Mine</button>
+      </div>
+    </div>
+    <div id="game-grid"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-primary" onclick="saveGame()">✓ Enregistrer cette partie</button>
+    <button class="btn btn-secondary" onclick="resetGrid()">↺ Réinitialiser</button>
+    <button class="btn btn-secondary" onclick="analyzeAndShow()">📊 Analyser</button>
+    <button class="btn btn-danger" onclick="clearAll()">🗑 Tout effacer</button>
+  </div>
+
+  <!-- Panel analyse -->
+  <div class="analysis-panel" id="analysis-panel">
+    <div class="section-title" style="margin-bottom:16px">Résultats de l'analyse</div>
+
+    <div class="confidence-bar">
+      <div class="conf-header">
+        <span>Fiabilité statistique</span>
+        <span id="fiab-pct">—</span>
+      </div>
+      <div class="conf-track">
+        <div class="conf-fill" id="fiab-bar" style="width:0%;background:var(--accent)"></div>
+      </div>
+    </div>
+
+    <div id="analysis-text" style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:12px"></div>
+
+    <div class="top-cells" id="top-cells"></div>
+  </div>
+
+  <!-- Historique -->
+  <div class="section-title">Historique des parties</div>
+  <div id="history-list">
+    <div class="empty-state">
+      Aucune partie enregistrée.<br>
+      Marque les cases d'une partie et clique "Enregistrer".
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let currentRows = 3, currentCols = 4;
+let cellStates = []; // 0=vide, 1=ballon, 2=mine
+let currentMode = 'ball';
+let history = JSON.parse(localStorage.getItem('gogoal_history') || '[]');
+let stats = JSON.parse(localStorage.getItem('gogoal_stats') || '{}');
+
+// ── Init ───────────────────────────────────────────────────────────────
+function init() {
+  buildGrid(currentRows, currentCols);
+  renderHistory();
+  updateStats();
+  // Charger heatmap si données dispo
+  if (getHistoryForGrid().length >= 3) showHeatmap();
+}
+
+function setGridType(rows, cols) {
+  currentRows = rows;
+  currentCols = cols;
+  cellStates = new Array(rows * cols).fill(0);
+  buildGrid(rows, cols);
+  document.getElementById('analysis-panel').classList.remove('visible');
+  updateStats();
+  if (getHistoryForGrid().length >= 3) showHeatmap();
+}
+
+// ── Grid builder ───────────────────────────────────────────────────────
+function buildGrid(rows, cols) {
+  cellStates = new Array(rows * cols).fill(0);
+  const grid = document.getElementById('game-grid');
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = '';
+
+  for (let i = 0; i < rows * cols; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    cell.innerHTML = `<div class="heat"></div><div class="prob-label"></div>`;
+    cell.addEventListener('click', () => toggleCell(i));
+    grid.appendChild(cell);
+  }
+
+  const totalCells = rows * cols;
+  document.getElementById('grid-info').textContent =
+    `Grille ${rows}×${cols} — ${totalCells} cases`;
+}
+
+function toggleCell(index) {
+  const cell = document.querySelector(`[data-index="${index}"]`);
+  if (currentMode === 'ball') {
+    if (cellStates[index] === 1) {
+      cellStates[index] = 0;
+      cell.className = 'cell';
+      cell.textContent = '';
+      cell.innerHTML = `<div class="heat"></div><div class="prob-label"></div>`;
+    } else {
+      cellStates[index] = 1;
+      cell.className = 'cell ball';
+      cell.querySelector('.heat').style.cssText = '';
+      cell.querySelector('.prob-label').textContent = '';
+      const icon = document.createElement('span');
+      icon.textContent = '⚽';
+      cell.appendChild(icon);
+    }
+  } else {
+    if (cellStates[index] === 2) {
+      cellStates[index] = 0;
+      cell.className = 'cell';
+      cell.innerHTML = `<div class="heat"></div><div class="prob-label"></div>`;
+    } else {
+      cellStates[index] = 2;
+      cell.className = 'cell mine';
+      cell.querySelector('.heat').style.cssText = '';
+      cell.querySelector('.prob-label').textContent = '';
+      const icon = document.createElement('span');
+      icon.textContent = '💣';
+      cell.appendChild(icon);
+    }
+  }
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-ball').className =
+    mode === 'ball' ? 'mode-btn active-ball' : 'mode-btn';
+  document.getElementById('mode-mine').className =
+    mode === 'mine' ? 'mode-btn active-mine' : 'mode-btn';
+}
+
+// ── Save / Load ────────────────────────────────────────────────────────
+function getGridKey() { return `${currentRows}x${currentCols}`; }
+
+function getHistoryForGrid() {
+  return history.filter(h => h.grid === getGridKey());
+}
+
+function saveGame() {
+  const balls = cellStates.filter(s => s === 1).length;
+  const mines = cellStates.filter(s => s === 2).length;
+
+  if (balls === 0 && mines === 0) {
+    showToast('⚠️ Marque au moins une case avant d\'enregistrer');
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    grid: getGridKey(),
+    cells: [...cellStates],
+    balls,
+    mines,
+    date: new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+  };
+
+  history.unshift(entry);
+  localStorage.setItem('gogoal_history', JSON.stringify(history));
+
+  resetGrid();
+  renderHistory();
+  updateStats();
+  showToast('✓ Partie enregistrée !');
+
+  if (getHistoryForGrid().length >= 3) showHeatmap();
+}
+
+function deleteEntry(id) {
+  history = history.filter(h => h.id !== id);
+  localStorage.setItem('gogoal_history', JSON.stringify(history));
+  renderHistory();
+  updateStats();
+  if (getHistoryForGrid().length >= 3) showHeatmap();
+  else clearHeatmap();
+}
+
+function clearAll() {
+  if (!confirm('Effacer tout l\'historique ?')) return;
+  history = [];
+  localStorage.removeItem('gogoal_history');
+  renderHistory();
+  updateStats();
+  clearHeatmap();
+  document.getElementById('analysis-panel').classList.remove('visible');
+  showToast('🗑 Historique effacé');
+}
+
+function resetGrid() {
+  buildGrid(currentRows, currentCols);
+  if (getHistoryForGrid().length >= 3) showHeatmap();
+}
+
+// ── Statistics ─────────────────────────────────────────────────────────
+function computeProbs() {
+  const gridHistory = getHistoryForGrid();
+  const n = gridHistory.length;
+  const total = currentRows * currentCols;
+  const freq = new Array(total).fill(0);
+
+  for (const entry of gridHistory) {
+    for (let i = 0; i < total; i++) {
+      if (entry.cells[i] === 1) freq[i]++;
+    }
+  }
+
+  return freq.map(f => n > 0 ? f / n : 0);
+}
+
+function updateStats() {
+  const gridHistory = getHistoryForGrid();
+  const n = gridHistory.length;
+  document.getElementById('stat-parties').textContent = history.length;
+
+  if (n === 0) {
+    document.getElementById('stat-ballons').textContent = '—';
+    document.getElementById('stat-fiab').textContent = '—';
+    return;
+  }
+
+  const avgBalls = (gridHistory.reduce((s, h) => s + h.balls, 0) / n).toFixed(1);
+  document.getElementById('stat-ballons').textContent = avgBalls;
+
+  const fiab = Math.min(100, Math.round((n / 20) * 100));
+  document.getElementById('stat-fiab').textContent = fiab + '%';
+}
+
+// ── Heatmap ────────────────────────────────────────────────────────────
+function showHeatmap() {
+  const probs = computeProbs();
+  const cells = document.querySelectorAll('.cell');
+  const max = Math.max(...probs);
+  const min = Math.min(...probs);
+
+  cells.forEach((cell, i) => {
+    const p = probs[i];
+    const norm = max > min ? (p - min) / (max - min) : 0.5;
+    const heat = cell.querySelector('.heat');
+    const label = cell.querySelector('.prob-label');
+
+    // Color: green (safe) to red (risky)
+    const r = Math.round(norm * 255);
+    const g = Math.round((1 - norm) * 200 + 55);
+    heat.style.background = `rgba(${r},${g},50,0.25)`;
+    heat.style.opacity = '1';
+
+    if (label) {
+      label.textContent = Math.round(p * 100) + '%';
+      label.style.opacity = '0.7';
+      label.style.color = norm > 0.6 ? '#ff8099' : '#00e5a0';
+    }
+  });
+}
+
+function clearHeatmap() {
+  document.querySelectorAll('.cell .heat').forEach(h => {
+    h.style.opacity = '0';
+    h.style.background = '';
+  });
+  document.querySelectorAll('.cell .prob-label').forEach(l => {
+    l.style.opacity = '0';
+  });
+}
+
+// ── Analysis panel ─────────────────────────────────────────────────────
+function analyzeAndShow() {
+  const gridHistory = getHistoryForGrid();
+  const n = gridHistory.length;
+
+  if (n < 3) {
+    showToast(`⚠️ Enregistre au moins 3 parties sur la grille ${getGridKey()}`);
+    return;
+  }
+
+  const probs = computeProbs();
+  const total = currentRows * currentCols;
+  const fiab = Math.min(100, Math.round((n / 20) * 100));
+
+  document.getElementById('fiab-pct').textContent = fiab + '%';
+  const bar = document.getElementById('fiab-bar');
+  bar.style.width = fiab + '%';
+  bar.style.background = fiab < 40 ? 'var(--accent3)' : fiab < 70 ? 'var(--accent)' : 'var(--accent)';
+
+  let msg = `Sur ${n} partie(s) enregistrée(s) pour la grille ${getGridKey()}. `;
+  if (n < 10) msg += `La fiabilité est faible — enregistre plus de parties pour affiner l'analyse.`;
+  else if (n < 20) msg += `La fiabilité est modérée. Les probabilités commencent à être significatives.`;
+  else msg += `Bonne base statistique. Les fréquences sont plus représentatives.`;
+
+  document.getElementById('analysis-text').textContent = msg;
+
+  // Top 2 safe + top 2 risky
+  const sorted = probs.map((p, i) => ({ i, p })).sort((a, b) => b.p - a.p);
+  const topSafe = sorted.slice(0, 2);
+  const topRisky = sorted.slice(-2).reverse();
+
+  const container = document.getElementById('top-cells');
+  container.innerHTML = '';
+
+  function cellLabel(idx) {
+    const row = Math.floor(idx / currentCols) + 1;
+    const col = (idx % currentCols) + 1;
+    return `Ligne ${row}, Col ${col}`;
+  }
+
+  topSafe.forEach(({ i, p }) => {
+    container.innerHTML += `
+      <div class="top-cell-card safe">
+        <div class="cell-pos">⚽ ${cellLabel(i)}</div>
+        <div style="color:var(--muted);font-size:10px">Ballon ${Math.round(p*100)}% du temps</div>
+      </div>`;
+  });
+
+  topRisky.forEach(({ i, p }) => {
+    const mineProb = 1 - p;
+    container.innerHTML += `
+      <div class="top-cell-card risky">
+        <div class="cell-pos">💣 ${cellLabel(i)}</div>
+        <div style="color:var(--muted);font-size:10px">Mine ~${Math.round(mineProb*100)}% du temps</div>
+      </div>`;
+  });
+
+  document.getElementById('analysis-panel').classList.add('visible');
+  document.getElementById('analysis-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showHeatmap();
+}
+
+// ── History render ─────────────────────────────────────────────────────
+function renderHistory() {
+  const container = document.getElementById('history-list');
+  const gridHistory = getHistoryForGrid();
+
+  if (gridHistory.length === 0) {
+    container.innerHTML = `<div class="empty-state">Aucune partie enregistrée pour la grille ${getGridKey()}.<br>Marque les cases d'une partie et clique "Enregistrer".</div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="history-list">${
+    gridHistory.map(entry => `
+      <div class="history-item">
+        <span style="color:var(--muted)">${entry.date}</span>
+        <span class="history-balls">⚽ ${entry.balls}</span>
+        <span class="history-mines">💣 ${entry.mines}</span>
+        <button class="history-delete" onclick="deleteEntry(${entry.id})">×</button>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Grid selector ──────────────────────────────────────────────────────
+document.querySelectorAll('.grid-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.grid-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    setGridType(parseInt(btn.dataset.rows), parseInt(btn.dataset.cols));
+    renderHistory();
+  });
+});
+
+// ── PWA Install ────────────────────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('visible');
+});
+
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') document.getElementById('install-banner').classList.remove('visible');
+  deferredPrompt = null;
+});
+
+// ── Service Worker ────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── Start ──────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
