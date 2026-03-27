@@ -1,51 +1,73 @@
-// --- LOGIQUE DE CALCUL CORRIGÉE ---
-
-function calculateStats() {
-  const stats = new Array(rows * cols).fill(0.5); // 50% = Inconnu
-  const counts = new Array(rows * cols).fill(null).map(() => ({ b: 0, m: 0 }));
-
-  history.forEach((game, idx) => {
-    const weight = Math.pow(0.95, idx); // Les parties récentes comptent plus
-    const data = game.data || game.cells;
-    data.forEach((val, i) => {
-      if (val === 1) counts[i].b += weight; // Ballon enregistré
-      if (val === 2) counts[i].m += weight; // Mine enregistrée
-    });
-  });
-
-  return counts.map(c => {
-    const total = c.b + c.m;
-    if (total === 0) return 0.5; // Case jamais testée
-
-    // LOGIQUE DE SÉCURITÉ : 
-    // On prend les ballons et on SOUSTRAIT fortement l'impact des mines.
-    // Si une case a 1 ballon et 1 mine, son score sera bas (danger).
-    const score = (c.b - (c.m * 2)) / (c.b + c.m + 1);
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal Master Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="p-6 flex flex-col items-center min-h-screen">
     
-    // On normalise entre 0 et 1 (0 = Danger mortel, 1 = Très sûr)
-    return Math.max(0.1, Math.min(0.9, 0.5 + score));
-  });
-}
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-cyan-400">GOAL STRATÉGIE</h1>
+        <p class="text-slate-400 text-sm">Analyseur de probabilités en temps réel</p>
+    </header>
 
-function analyze() {
-  const stats = calculateStats();
-  let msg = "⚽ CHEMIN CONSEILLÉ (SÉCURITÉ) :\n\n";
-  
-  for (let c = 0; c < cols; c++) {
-    let bestR = 0;
-    let maxSafety = -1;
+    <main class="w-full max-w-md space-y-6">
+        <div class="glass p-5 rounded-2xl space-y-4">
+            <div>
+                <label class="block text-xs uppercase tracking-wider mb-2 text-slate-400">Cases par colonne</label>
+                <input type="number" id="totalCases" value="4" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 outline-none focus:border-cyan-500">
+            </div>
+            <div>
+                <label class="block text-xs uppercase tracking-wider mb-2 text-slate-400">Nombre de mines</label>
+                <input type="number" id="mines" value="1" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 outline-none focus:border-cyan-500">
+            </div>
+            <div>
+                <label class="block text-xs uppercase tracking-wider mb-2 text-slate-400">Paliers visés</label>
+                <input type="number" id="paliers" value="3" oninput="calculer()" class="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 text-cyan-400 font-bold">
+            </div>
+        </div>
 
-    for (let r = 0; r < rows; r++) {
-      let idx = r * cols + c;
-      // On cherche la case avec le score de sécurité le plus élevé
-      if (stats[idx] > maxSafety) {
-        maxSafety = stats[idx];
-        bestR = r + 1;
-      }
-    }
-    
-    const dangerPercent = Math.round((1 - maxSafety) * 100);
-    msg += `Etape ${c+1} : Ligne ${bestR} (Risque estimé: ${dangerPercent}%)\n`;
-  }
-  alert(msg);
-}
+        <div id="resultBox" class="glass p-8 rounded-3xl text-center border-t-4 border-cyan-500">
+            <div class="text-sm text-slate-400 mb-1">Chances de réussite</div>
+            <div id="percentage" class="text-6xl font-black text-white">42.2%</div>
+            <div id="advice" class="mt-4 text-sm font-medium px-4 py-2 rounded-full inline-block"></div>
+        </div>
+    </main>
+
+    <script>
+        function calculer() {
+            const n = parseInt(document.getElementById('totalCases').value);
+            const m = parseInt(document.getElementById('mines').value);
+            const p = parseInt(document.getElementById('paliers').value);
+            
+            if (n > 0 && p > 0 && n > m) {
+                const probaUnitaire = (n - m) / n;
+                const probaTotale = Math.pow(probaUnitaire, p) * 100;
+                
+                const percentEl = document.getElementById('percentage');
+                const adviceEl = document.getElementById('advice');
+                
+                percentEl.innerText = probaTotale.toFixed(1) + "%";
+                
+                if (probaTotale > 70) {
+                    adviceEl.innerText = "CONSEIL : ZONE SÛRE ✅";
+                    adviceEl.className = "mt-4 text-sm font-medium px-4 py-2 rounded-full inline-block bg-green-900/50 text-green-400";
+                } else if (probaTotale > 40) {
+                    adviceEl.innerText = "CONSEIL : RISQUE MODÉRÉ ⚠️";
+                    adviceEl.className = "mt-4 text-sm font-medium px-4 py-2 rounded-full inline-block bg-yellow-900/50 text-yellow-400";
+                } else {
+                    adviceEl.innerText = "CONSEIL : DANGER ÉLEVÉ 🚨";
+                    adviceEl.className = "mt-4 text-sm font-medium px-4 py-2 rounded-full inline-block bg-red-900/50 text-red-400";
+                }
+            }
+        }
+        window.onload = calculer;
+    </script>
+</body>
+</html>
