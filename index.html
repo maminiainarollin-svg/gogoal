@@ -3,78 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Master Save - Mada</title>
+    <title>Goal Master Armor - Mada</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #0b0f1a; color: white; font-family: 'Segoe UI', sans-serif; }
         .card { background: #161c2d; border: 1px solid #2d3748; }
+        .danger-zone { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
+        .safe-zone { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; }
         .btn-active { background: #22d3ee !important; color: #0b0f1a !important; font-weight: bold; }
-        .history-item { border-left: 4px solid; transition: all 0.2s; }
-        .progress-bar { height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #22d3ee; transition: width 0.5s; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .warning-flash { animation: flash 1s infinite; color: #f87171; }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center min-h-screen pb-10">
 
-    <header class="w-full max-w-md mb-6 flex justify-between items-center">
+    <header class="w-full max-w-md mb-4 flex justify-between items-center">
         <div>
-            <h1 class="text-xl font-black text-cyan-400 italic">GOAL <span class="text-white">PRO SAVE</span></h1>
-            <p class="text-[9px] text-green-500 font-bold uppercase"><i class="fas fa-database"></i> Données Sauvegardées</p>
+            <h1 class="text-xl font-black text-cyan-400">GOAL <span class="text-white text-xs">ARMOR V2</span></h1>
+            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Calculateur de Risque Renforcé</p>
         </div>
-        <button onclick="clearData()" class="text-slate-500 hover:text-red-400 p-2"><i class="fas fa-trash-alt"></i></button>
+        <button onclick="clearData()" class="text-slate-600 hover:text-red-400 transition"><i class="fas fa-trash"></i></button>
     </header>
 
     <main class="w-full max-w-md space-y-4">
         
-        <div class="card p-4 rounded-2xl">
-            <div class="flex justify-between items-end mb-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase italic">Progression Totale (Ar)</span>
-                <span id="totalProfit" class="text-lg font-black text-green-400">+0 Ar</span>
+        <div class="card p-4 rounded-2xl flex justify-between items-center border-b-4 border-cyan-500">
+            <div>
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Profit Session (Ar)</span>
+                <div id="totalProfit" class="text-2xl font-black text-green-400">+0</div>
             </div>
-            <div class="progress-bar"><div id="pFill" class="progress-fill" style="width: 0%"></div></div>
+            <div class="text-right">
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Fiabilité</span>
+                <div id="riskLevel" class="text-xs font-black text-cyan-400">OPTIMAL</div>
+            </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-2">
             <div class="card p-3 rounded-xl">
-                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-2">Terrain</label>
-                <select id="tSelect" onchange="updateT()" class="w-full bg-slate-800 p-2 rounded text-xs outline-none border-none">
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Terrain</label>
+                <select id="tSelect" onchange="updateT()" class="w-full bg-slate-800 p-2 rounded text-xs outline-none">
                     <option value="3">Petit (3x4)</option>
                     <option value="4" selected>Moyen (4x7)</option>
                     <option value="5">Grand (5x10)</option>
                 </select>
             </div>
             <div class="card p-3 rounded-xl flex flex-col justify-center text-center">
-                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Palier</label>
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Paliers</label>
                 <div class="flex items-center justify-around font-black">
-                    <button onclick="changeP(-1)" class="text-cyan-400 text-lg">-</button>
+                    <button onclick="changeP(-1)" class="w-8 h-8 bg-slate-700 rounded-lg text-lg">-</button>
                     <span id="pVal" class="text-xl">3</span>
-                    <button onclick="changeP(1)" class="text-cyan-400 text-lg">+</button>
+                    <button onclick="changeP(1)" class="w-8 h-8 bg-slate-700 rounded-lg text-lg">+</button>
                 </div>
             </div>
         </div>
 
-        <button onclick="gen()" class="w-full py-4 bg-cyan-500 rounded-xl font-black text-slate-900 uppercase shadow-lg active:scale-95 transition">🎯 Suggestion Trajet</button>
+        <div id="greedWarning" class="hidden card p-3 rounded-xl border-red-500/50 text-center">
+            <p class="text-[10px] font-bold warning-flash uppercase"><i class="fas fa-exclamation-triangle"></i> Risque d'échec : 87% +</p>
+            <p class="text-[9px] text-slate-400 mt-1 italic">Visez moins de 4 paliers pour durer.</p>
+        </div>
+
+        <button onclick="gen()" class="w-full py-4 bg-cyan-500 rounded-xl font-black text-slate-900 uppercase shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+            <i class="fas fa-random"></i> Générer Trajet
+        </button>
         <div id="cViz" class="flex justify-center gap-2 min-h-[40px]"></div>
 
         <div class="card p-4 rounded-2xl">
-            <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Solde Actuel (Ar)</label>
+            <div class="flex justify-between mb-2">
+                <label class="text-[9px] font-bold text-slate-500 uppercase">Ton Solde (Ar)</label>
+                <span class="text-[9px] text-cyan-400 font-bold" id="coteActuelle">COTE: x2.31</span>
+            </div>
             <input type="number" id="solde" value="1000" oninput="calc()" class="w-full bg-slate-900 p-3 rounded-xl border border-slate-700 outline-none text-xl font-mono text-cyan-400">
-            <div class="mt-3 flex justify-between text-xs font-bold uppercase italic">
-                <span class="text-slate-500 italic">Mise conseillée:</span>
-                <span id="mSugg" class="text-white font-black">400 Ar</span>
+            <div class="mt-4 flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
+                <span class="text-[10px] text-slate-400 uppercase font-bold italic">Mise Conseillée:</span>
+                <span id="mSugg" class="text-xl font-black text-white">400 Ar</span>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-            <button onclick="log(true)" class="bg-green-600 p-4 rounded-xl font-black uppercase text-xs active:scale-95 transition">Gain ✅</button>
-            <button onclick="log(false)" class="bg-red-600 p-4 rounded-xl font-black uppercase text-xs active:scale-95 transition">Perte ❌</button>
+            <button onclick="log(true)" class="bg-green-600 p-4 rounded-xl font-black uppercase text-xs active:scale-95 transition shadow-lg shadow-green-900/20">Gain ✅</button>
+            <button onclick="log(false)" class="bg-red-600 p-4 rounded-xl font-black uppercase text-xs active:scale-95 transition shadow-lg shadow-red-900/20">Perte ❌</button>
         </div>
 
-        <div class="card p-4 rounded-2xl">
-            <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 italic">Dernières Opérations</h3>
-            <div id="hList" class="space-y-2 max-h-40 overflow-y-auto font-mono text-[10px]"></div>
-        </div>
+        <div id="hList" class="space-y-2 max-h-40 overflow-y-auto font-mono text-[10px]"></div>
 
     </main>
 
@@ -90,32 +101,46 @@
             const v = document.getElementById('cViz'); v.innerHTML="";
             for(let i=0; i<p; i++){
                 const b = document.createElement('div');
-                b.className = "w-10 h-10 bg-white text-slate-900 rounded-lg flex items-center justify-center font-black animate-bounce";
+                b.className = "w-10 h-10 bg-cyan-400 text-slate-900 rounded-lg flex items-center justify-center font-black animate-pop";
                 b.innerText = Math.floor(Math.random()*n)+1; v.appendChild(b);
             }
         }
 
         function calc(){
             const prob = Math.pow((n-1)/n, p);
+            const cote = Math.pow(1.3, p); // Approximation cote Bet261
             const solde = parseInt(document.getElementById('solde').value) || 0;
-            let m = Math.max(400, Math.floor(solde * (prob > 0.6 ? 0.1 : 0.05)));
-            document.getElementById('mSugg').innerText = (solde < 400 ? 0 : m) + " Ar";
             
+            document.getElementById('coteActuelle').innerText = "COTE: x" + cote.toFixed(2);
+            document.getElementById('pVal').innerText = p;
             document.getElementById('totalProfit').innerText = (profit >= 0 ? "+" : "") + profit + " Ar";
-            document.getElementById('totalProfit').className = profit >= 0 ? "text-lg font-black text-green-400" : "text-lg font-black text-red-400";
-            document.getElementById('pFill').style.width = Math.min(100, Math.abs(profit/50)) + "%";
+            
+            // Mise sécurisée
+            let m = Math.max(400, Math.floor(solde * (prob > 0.6 ? 0.12 : 0.06)));
+            if(p > 4) m = 400; // Force la mise mini si le risque est trop haut
+            document.getElementById('mSugg').innerText = (solde < 400 ? 0 : m) + " Ar";
+
+            // Alerte Visuelle
+            const gWarn = document.getElementById('greedWarning');
+            const riskLevel = document.getElementById('riskLevel');
+            if(p >= 5) {
+                gWarn.classList.remove('hidden');
+                riskLevel.innerText = "CRITIQUE";
+                riskLevel.className = "text-xs font-black text-red-500";
+            } else {
+                gWarn.classList.add('hidden');
+                riskLevel.innerText = p <= 2 ? "SÛR" : "OPTIMAL";
+                riskLevel.className = "text-xs font-black text-cyan-400";
+            }
         }
 
         function log(win){
             const m = parseInt(document.getElementById('mSugg').innerText);
-            const mult = Math.pow(1.3, p);
-            const val = win ? Math.floor(m * mult) - m : -m;
+            const cote = Math.pow(1.3, p);
+            const val = win ? Math.floor(m * cote) - m : -m;
             profit += val;
-            
-            const entry = { win, val, p, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-            logs.unshift(entry);
+            logs.unshift({ win, val, p, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
             if(logs.length > 20) logs.pop();
-            
             save(); render(); calc();
         }
 
@@ -128,18 +153,13 @@
             const l = document.getElementById('hList'); l.innerHTML = "";
             logs.forEach(e => {
                 const d = document.createElement('div');
-                d.className = `p-2 rounded bg-slate-800/50 history-item ${e.win?'border-green-500':'border-red-500'} flex justify-between items-center`;
-                d.innerHTML = `<span>${e.win?'WIN':'LOSS'} (${e.val > 0 ? '+':''}${e.val} Ar)</span><span class="text-slate-500 italic">P${e.p} - ${e.time}</span>`;
+                d.className = `p-2 rounded bg-slate-800/50 border-l-4 ${e.win?'border-green-500':'border-red-500'} flex justify-between`;
+                d.innerHTML = `<span>${e.win?'GAIN':'PERTE'} (${e.val > 0 ? '+':''}${e.val} Ar)</span><span class="text-slate-500 italic">P${e.p}</span>`;
                 l.appendChild(d);
             });
         }
 
-        function clearData(){
-            if(confirm("Effacer tout l'historique et les gains ?")){
-                localStorage.clear(); profit = 0; logs = []; render(); calc();
-            }
-        }
-
+        function clearData(){ if(confirm("Effacer la session ?")){ localStorage.clear(); profit=0; logs=[]; render(); calc(); } }
         window.onload = () => { render(); calc(); };
     </script>
 </body>
