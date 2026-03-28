@@ -3,164 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Master Armor - Mada</title>
+    <title>Goal Master - DISCIPLINE EDITION</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #0b0f1a; color: white; font-family: 'Segoe UI', sans-serif; }
-        .card { background: #161c2d; border: 1px solid #2d3748; }
-        .danger-zone { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
-        .safe-zone { border-color: #22c55e !important; background: rgba(34, 197, 94, 0.1) !important; }
-        .btn-active { background: #22d3ee !important; color: #0b0f1a !important; font-weight: bold; }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .warning-flash { animation: flash 1s infinite; color: #f87171; }
+        body { background-color: #05070a; color: white; font-family: 'Segoe UI', sans-serif; }
+        .card { background: #0f172a; border: 1px solid #1e293b; }
+        .btn-active { background: #06b6d4 !important; color: #05070a !important; font-weight: 900; }
+        .lock-screen { background: rgba(5, 7, 10, 0.98); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center min-h-screen pb-10">
 
-    <header class="w-full max-w-md mb-4 flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-black text-cyan-400">GOAL <span class="text-white text-xs">ARMOR V2</span></h1>
-            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Calculateur de Risque Renforcé</p>
-        </div>
-        <button onclick="clearData()" class="text-slate-600 hover:text-red-400 transition"><i class="fas fa-trash"></i></button>
+    <div id="disciplineLock" class="hidden fixed inset-0 z-[100] lock-screen flex flex-col items-center justify-center p-8 text-center">
+        <i class="fas fa-check-circle text-7xl text-green-500 mb-6"></i>
+        <h2 class="text-3xl font-black mb-2">OBJECTIF ATTEINT !</h2>
+        <p class="text-slate-400 mb-8 italic">Tu as gagné ce que tu voulais. Si tu continues maintenant, les probabilités vont se retourner contre toi. Retire tes gains et reviens demain.</p>
+        <div class="text-sm text-slate-600 uppercase tracking-widest">Application verrouillée jusqu'à demain</div>
+    </div>
+
+    <header class="w-full max-w-md mb-6 flex justify-between items-center">
+        <h1 class="text-xl font-black text-cyan-500 italic">GOAL <span class="text-white font-normal">DISCIPLINE</span></h1>
+        <button onclick="reset()" class="text-slate-700 text-xs uppercase font-bold">Nouvelle Session</button>
     </header>
 
     <main class="w-full max-w-md space-y-4">
         
-        <div class="card p-4 rounded-2xl flex justify-between items-center border-b-4 border-cyan-500">
-            <div>
-                <span class="text-[9px] font-bold text-slate-500 uppercase">Profit Session (Ar)</span>
-                <div id="totalProfit" class="text-2xl font-black text-green-400">+0</div>
-            </div>
-            <div class="text-right">
-                <span class="text-[9px] font-bold text-slate-500 uppercase">Fiabilité</span>
-                <div id="riskLevel" class="text-xs font-black text-cyan-400">OPTIMAL</div>
-            </div>
+        <div class="card p-4 rounded-3xl border-b-4 border-yellow-500">
+            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Objectif Gain du jour (MGA)</label>
+            <input type="number" id="targetGain" value="1500" class="w-full bg-transparent text-xl font-black outline-none text-yellow-500">
+            <p class="text-[9px] text-slate-500 mt-2 italic">L'app se bloquera dès que tu auras gagné cette somme.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
-            <div class="card p-3 rounded-xl">
-                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Terrain</label>
-                <select id="tSelect" onchange="updateT()" class="w-full bg-slate-800 p-2 rounded text-xs outline-none">
-                    <option value="3">Petit (3x4)</option>
-                    <option value="4" selected>Moyen (4x7)</option>
-                    <option value="5">Grand (5x10)</option>
-                </select>
+            <div class="card p-3 rounded-2xl">
+                <span class="text-[9px] font-bold text-slate-500 uppercase block">Profit Actuel</span>
+                <div id="profit" class="text-xl font-black text-green-400">+0 Ar</div>
             </div>
-            <div class="card p-3 rounded-xl flex flex-col justify-center text-center">
-                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Paliers</label>
-                <div class="flex items-center justify-around font-black">
-                    <button onclick="changeP(-1)" class="w-8 h-8 bg-slate-700 rounded-lg text-lg">-</button>
-                    <span id="pVal" class="text-xl">3</span>
-                    <button onclick="changeP(1)" class="w-8 h-8 bg-slate-700 rounded-lg text-lg">+</button>
+            <div class="card p-3 rounded-2xl text-right">
+                <span class="text-[9px] font-bold text-slate-500 uppercase block">Statut</span>
+                <div id="status" class="text-xl font-black text-cyan-400 font-mono">EN COURS</div>
+            </div>
+        </div>
+
+        <div class="card p-4 rounded-3xl">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-1" id="tBtns">
+                    <button onclick="setN(3,this)" class="px-3 py-1 rounded-lg bg-slate-800 text-[10px] font-bold">3x4</button>
+                    <button onclick="setN(4,this)" class="px-3 py-1 rounded-lg bg-slate-800 text-[10px] font-bold btn-active">4x7</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="setP(-1)" class="w-8 h-8 bg-slate-800 rounded-full">-</button>
+                    <span id="pVal" class="font-black text-white w-4 text-center">3</span>
+                    <button onclick="setP(1)" class="w-8 h-8 bg-slate-800 rounded-full">+</button>
                 </div>
             </div>
+            <button onclick="gen()" class="w-full py-4 bg-cyan-500 rounded-2xl font-black text-slate-950 uppercase active:scale-95 transition">🎯 Trajet Suggéré</button>
+            <div id="cViz" class="flex justify-center gap-2 mt-4 min-h-[40px]"></div>
         </div>
 
-        <div id="greedWarning" class="hidden card p-3 rounded-xl border-red-500/50 text-center">
-            <p class="text-[10px] font-bold warning-flash uppercase"><i class="fas fa-exclamation-triangle"></i> Risque d'échec : 87% +</p>
-            <p class="text-[9px] text-slate-400 mt-1 italic">Visez moins de 4 paliers pour durer.</p>
-        </div>
-
-        <button onclick="gen()" class="w-full py-4 bg-cyan-500 rounded-xl font-black text-slate-900 uppercase shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
-            <i class="fas fa-random"></i> Générer Trajet
-        </button>
-        <div id="cViz" class="flex justify-center gap-2 min-h-[40px]"></div>
-
-        <div class="card p-4 rounded-2xl">
-            <div class="flex justify-between mb-2">
-                <label class="text-[9px] font-bold text-slate-500 uppercase">Ton Solde (Ar)</label>
-                <span class="text-[9px] text-cyan-400 font-bold" id="coteActuelle">COTE: x2.31</span>
-            </div>
-            <input type="number" id="solde" value="1000" oninput="calc()" class="w-full bg-slate-900 p-3 rounded-xl border border-slate-700 outline-none text-xl font-mono text-cyan-400">
-            <div class="mt-4 flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
-                <span class="text-[10px] text-slate-400 uppercase font-bold italic">Mise Conseillée:</span>
+        <div class="card p-4 rounded-3xl">
+            <label class="text-[9px] text-slate-500 font-bold uppercase">Ton Solde Bet261</label>
+            <input type="number" id="solde" value="1000" oninput="calc()" class="w-full bg-transparent text-2xl font-black outline-none border-b border-slate-800 mb-4">
+            <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400 italic">Mise conseillée:</span>
                 <span id="mSugg" class="text-xl font-black text-white">400 Ar</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="log(true)" class="bg-green-600 p-4 rounded-xl font-black uppercase text-xs active:scale-95 transition shadow-lg shadow-green-900/20">Gain ✅</button>
-            <button onclick="log(false)" class="bg-red-600 p-4 rounded-xl font-black uppercase text-xs active:scale-95 transition shadow-lg shadow-red-900/20">Perte ❌</button>
+        <div class="grid grid-cols-2 gap-4">
+            <button onclick="log(true)" class="bg-emerald-600 p-4 rounded-2xl font-black uppercase text-xs active:scale-95 transition">Gagné ✅</button>
+            <button onclick="log(false)" class="bg-rose-600 p-4 rounded-2xl font-black uppercase text-xs active:scale-95 transition">Perdu ❌</button>
         </div>
-
-        <div id="hList" class="space-y-2 max-h-40 overflow-y-auto font-mono text-[10px]"></div>
 
     </main>
 
     <script>
         let n=4, p=3, profit=0;
-        let logs = JSON.parse(localStorage.getItem('goal_logs')) || [];
-        profit = parseInt(localStorage.getItem('goal_profit')) || 0;
+        let logs = JSON.parse(localStorage.getItem('d_logs')) || [];
+        profit = parseInt(localStorage.getItem('d_profit')) || 0;
 
-        function updateT(){ n = parseInt(document.getElementById('tSelect').value); calc(); }
-        function changeP(v){ p = Math.max(1, p+v); document.getElementById('pVal').innerText = p; calc(); }
+        function setN(val, b){ n=val; document.querySelectorAll('#tBtns button').forEach(x=>x.classList.remove('btn-active')); b.classList.add('btn-active'); calc(); }
+        function setP(v){ p=Math.max(1,Math.min(7,p+v)); calc(); }
 
         function gen(){
             const v = document.getElementById('cViz'); v.innerHTML="";
             for(let i=0; i<p; i++){
                 const b = document.createElement('div');
-                b.className = "w-10 h-10 bg-cyan-400 text-slate-900 rounded-lg flex items-center justify-center font-black animate-pop";
+                b.className = "w-10 h-10 bg-white text-slate-950 rounded-xl flex items-center justify-center font-black text-xl animate-bounce";
                 b.innerText = Math.floor(Math.random()*n)+1; v.appendChild(b);
             }
         }
 
         function calc(){
-            const prob = Math.pow((n-1)/n, p);
-            const cote = Math.pow(1.3, p); // Approximation cote Bet261
-            const solde = parseInt(document.getElementById('solde').value) || 0;
-            
-            document.getElementById('coteActuelle').innerText = "COTE: x" + cote.toFixed(2);
             document.getElementById('pVal').innerText = p;
-            document.getElementById('totalProfit').innerText = (profit >= 0 ? "+" : "") + profit + " Ar";
+            document.getElementById('profit').innerText = (profit>=0?'+':'')+profit+' Ar';
+            const solde = parseInt(document.getElementById('solde').value) || 0;
+            const target = parseInt(document.getElementById('targetGain').value) || 1500;
             
-            // Mise sécurisée
-            let m = Math.max(400, Math.floor(solde * (prob > 0.6 ? 0.12 : 0.06)));
-            if(p > 4) m = 400; // Force la mise mini si le risque est trop haut
-            document.getElementById('mSugg').innerText = (solde < 400 ? 0 : m) + " Ar";
-
-            // Alerte Visuelle
-            const gWarn = document.getElementById('greedWarning');
-            const riskLevel = document.getElementById('riskLevel');
-            if(p >= 5) {
-                gWarn.classList.remove('hidden');
-                riskLevel.innerText = "CRITIQUE";
-                riskLevel.className = "text-xs font-black text-red-500";
-            } else {
-                gWarn.classList.add('hidden');
-                riskLevel.innerText = p <= 2 ? "SÛR" : "OPTIMAL";
-                riskLevel.className = "text-xs font-black text-cyan-400";
+            // Sécurité : blocage si objectif atteint
+            if(profit >= target) {
+                document.getElementById('disciplineLock').classList.remove('hidden');
             }
+
+            let m = Math.max(400, Math.floor(solde * 0.08));
+            document.getElementById('mSugg').innerText = (solde < 400 ? 0 : m) + " Ar";
         }
 
         function log(win){
             const m = parseInt(document.getElementById('mSugg').innerText);
-            const cote = Math.pow(1.3, p);
-            const val = win ? Math.floor(m * cote) - m : -m;
+            const val = win ? Math.floor(m * Math.pow(1.3, p)) - m : -m;
             profit += val;
-            logs.unshift({ win, val, p, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-            if(logs.length > 20) logs.pop();
-            save(); render(); calc();
+            logs.unshift({ win, val, p });
+            localStorage.setItem('d_logs', JSON.stringify(logs));
+            localStorage.setItem('d_profit', profit);
+            calc();
         }
 
-        function save(){
-            localStorage.setItem('goal_logs', JSON.stringify(logs));
-            localStorage.setItem('goal_profit', profit);
-        }
-
-        function render(){
-            const l = document.getElementById('hList'); l.innerHTML = "";
-            logs.forEach(e => {
-                const d = document.createElement('div');
-                d.className = `p-2 rounded bg-slate-800/50 border-l-4 ${e.win?'border-green-500':'border-red-500'} flex justify-between`;
-                d.innerHTML = `<span>${e.win?'GAIN':'PERTE'} (${e.val > 0 ? '+':''}${e.val} Ar)</span><span class="text-slate-500 italic">P${e.p}</span>`;
-                l.appendChild(d);
-            });
-        }
-
-        function clearData(){ if(confirm("Effacer la session ?")){ localStorage.clear(); profit=0; logs=[]; render(); calc(); } }
-        window.onload = () => { render(); calc(); };
+        function reset(){ if(confirm("Nouvelle session ?")){ localStorage.clear(); profit=0; logs=[]; location.reload(); }}
+        window.onload=calc;
     </script>
 </body>
 </html>
