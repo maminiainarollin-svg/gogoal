@@ -3,125 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Master - DISCIPLINE EDITION</title>
+    <title>Goal Master - V4 ARMOR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #05070a; color: white; font-family: 'Segoe UI', sans-serif; }
         .card { background: #0f172a; border: 1px solid #1e293b; }
-        .btn-active { background: #06b6d4 !important; color: #05070a !important; font-weight: 900; }
         .lock-screen { background: rgba(5, 7, 10, 0.98); backdrop-filter: blur(10px); }
+        .btn-active { background: #06b6d4 !important; color: #05070a !important; font-weight: 900; }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center min-h-screen pb-10">
 
     <div id="disciplineLock" class="hidden fixed inset-0 z-[100] lock-screen flex flex-col items-center justify-center p-8 text-center">
-        <i class="fas fa-check-circle text-7xl text-green-500 mb-6"></i>
-        <h2 class="text-3xl font-black mb-2">OBJECTIF ATTEINT !</h2>
-        <p class="text-slate-400 mb-8 italic">Tu as gagné ce que tu voulais. Si tu continues maintenant, les probabilités vont se retourner contre toi. Retire tes gains et reviens demain.</p>
-        <div class="text-sm text-slate-600 uppercase tracking-widest">Application verrouillée jusqu'à demain</div>
+        <i id="lockIcon" class="fas fa-exclamation-circle text-7xl mb-6"></i>
+        <h2 id="lockTitle" class="text-3xl font-black mb-2 uppercase">STOP !</h2>
+        <p id="lockMsg" class="text-slate-400 mb-8 italic"></p>
+        <button onclick="reset()" class="bg-slate-800 px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest">Réinitialiser pour demain</button>
     </div>
 
     <header class="w-full max-w-md mb-6 flex justify-between items-center">
-        <h1 class="text-xl font-black text-cyan-500 italic">GOAL <span class="text-white font-normal">DISCIPLINE</span></h1>
-        <button onclick="reset()" class="text-slate-700 text-xs uppercase font-bold">Nouvelle Session</button>
+        <h1 class="text-xl font-black text-cyan-500 italic">GOAL <span class="text-white font-normal">V4 ARMOR</span></h1>
+        <div class="text-[9px] text-slate-500 font-bold uppercase">Sécurité Active <i class="fas fa-shield-alt text-cyan-500"></i></div>
     </header>
 
     <main class="w-full max-w-md space-y-4">
         
-        <div class="card p-4 rounded-3xl border-b-4 border-yellow-500">
-            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Objectif Gain du jour (MGA)</label>
-            <input type="number" id="targetGain" value="1500" class="w-full bg-transparent text-xl font-black outline-none text-yellow-500">
-            <p class="text-[9px] text-slate-500 mt-2 italic">L'app se bloquera dès que tu auras gagné cette somme.</p>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="card p-3 rounded-2xl border-b-2 border-green-500">
+                <label class="text-[8px] font-bold text-slate-500 uppercase block">Objectif Gain</label>
+                <input type="number" id="targetGain" value="1500" class="w-full bg-transparent font-black text-green-400 outline-none">
+            </div>
+            <div class="card p-3 rounded-2xl border-b-2 border-red-500">
+                <label class="text-[8px] font-bold text-slate-500 uppercase block">Limite Perte (Stop-Loss)</label>
+                <input type="number" id="stopLoss" value="2000" class="w-full bg-transparent font-black text-red-500 outline-none">
+            </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-            <div class="card p-3 rounded-2xl">
-                <span class="text-[9px] font-bold text-slate-500 uppercase block">Profit Actuel</span>
-                <div id="profit" class="text-xl font-black text-green-400">+0 Ar</div>
+        <div class="card p-4 rounded-3xl flex justify-between items-center">
+            <div>
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Profit Net Actuel</span>
+                <div id="profit" class="text-2xl font-black">+0 Ar</div>
             </div>
-            <div class="card p-3 rounded-2xl text-right">
-                <span class="text-[9px] font-bold text-slate-500 uppercase block">Statut</span>
-                <div id="status" class="text-xl font-black text-cyan-400 font-mono">EN COURS</div>
+            <div class="text-right">
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Risque</span>
+                <div id="riskStatus" class="text-xs font-black text-cyan-400">OPTIMAL</div>
             </div>
         </div>
 
         <div class="card p-4 rounded-3xl">
             <div class="flex justify-between items-center mb-4">
-                <div class="flex gap-1" id="tBtns">
-                    <button onclick="setN(3,this)" class="px-3 py-1 rounded-lg bg-slate-800 text-[10px] font-bold">3x4</button>
+                <div class="flex gap-1">
                     <button onclick="setN(4,this)" class="px-3 py-1 rounded-lg bg-slate-800 text-[10px] font-bold btn-active">4x7</button>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="setP(-1)" class="w-8 h-8 bg-slate-800 rounded-full">-</button>
-                    <span id="pVal" class="font-black text-white w-4 text-center">3</span>
-                    <button onclick="setP(1)" class="w-8 h-8 bg-slate-800 rounded-full">+</button>
+                <div class="flex items-center gap-3">
+                    <button onclick="changeP(-1)" class="w-8 h-8 bg-slate-800 rounded-full font-bold">-</button>
+                    <span id="pVal" class="font-black text-xl w-4 text-center">3</span>
+                    <button onclick="changeP(1)" class="w-8 h-8 bg-slate-800 rounded-full font-bold">+</button>
                 </div>
             </div>
-            <button onclick="gen()" class="w-full py-4 bg-cyan-500 rounded-2xl font-black text-slate-950 uppercase active:scale-95 transition">🎯 Trajet Suggéré</button>
+            <button onclick="gen()" class="w-full py-4 bg-cyan-500 rounded-2xl font-black text-slate-950 uppercase shadow-lg shadow-cyan-500/20 active:scale-95 transition">🎯 Générer Trajet</button>
             <div id="cViz" class="flex justify-center gap-2 mt-4 min-h-[40px]"></div>
         </div>
 
         <div class="card p-4 rounded-3xl">
-            <label class="text-[9px] text-slate-500 font-bold uppercase">Ton Solde Bet261</label>
-            <input type="number" id="solde" value="1000" oninput="calc()" class="w-full bg-transparent text-2xl font-black outline-none border-b border-slate-800 mb-4">
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-400 italic">Mise conseillée:</span>
+            <label class="text-[9px] text-slate-500 font-bold uppercase">Solde Réel Bet261 (MGA)</label>
+            <input type="number" id="solde" value="1000" oninput="calc()" class="w-full bg-transparent text-2xl font-black outline-none border-b border-slate-800 mb-2">
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-[10px] text-slate-400 font-bold uppercase italic">Mise conseillée :</span>
                 <span id="mSugg" class="text-xl font-black text-white">400 Ar</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <button onclick="log(true)" class="bg-emerald-600 p-4 rounded-2xl font-black uppercase text-xs active:scale-95 transition">Gagné ✅</button>
-            <button onclick="log(false)" class="bg-rose-600 p-4 rounded-2xl font-black uppercase text-xs active:scale-95 transition">Perdu ❌</button>
+        <div class="grid grid-cols-2 gap-4 h-16">
+            <button onclick="log(true)" class="bg-emerald-600 rounded-2xl font-black uppercase text-xs active:scale-95 transition shadow-lg shadow-emerald-900/20">Gagné ✅</button>
+            <button onclick="log(false)" class="bg-rose-600 rounded-2xl font-black uppercase text-xs active:scale-95 transition shadow-lg shadow-rose-900/20">Perdu ❌</button>
         </div>
 
     </main>
 
     <script>
         let n=4, p=3, profit=0;
-        let logs = JSON.parse(localStorage.getItem('d_logs')) || [];
-        profit = parseInt(localStorage.getItem('d_profit')) || 0;
+        let logs = JSON.parse(localStorage.getItem('v4_logs')) || [];
+        profit = parseInt(localStorage.getItem('v4_profit')) || 0;
 
-        function setN(val, b){ n=val; document.querySelectorAll('#tBtns button').forEach(x=>x.classList.remove('btn-active')); b.classList.add('btn-active'); calc(); }
-        function setP(v){ p=Math.max(1,Math.min(7,p+v)); calc(); }
+        function changeP(v) {
+            const solde = parseInt(document.getElementById('solde').value) || 0;
+            // SÉCURITÉ : Bloque au-dessus de 3 si solde faible
+            if (v > 0 && p >= 3 && solde < 2000) {
+                alert("⚠️ Solde trop faible pour viser plus de 3 paliers. Risque de ruine trop élevé !");
+                return;
+            }
+            p = Math.max(1, Math.min(7, p+v));
+            calc();
+        }
 
-        function gen(){
+        function gen() {
             const v = document.getElementById('cViz'); v.innerHTML="";
             for(let i=0; i<p; i++){
                 const b = document.createElement('div');
-                b.className = "w-10 h-10 bg-white text-slate-950 rounded-xl flex items-center justify-center font-black text-xl animate-bounce";
+                b.className = "w-10 h-10 bg-white text-slate-950 rounded-xl flex items-center justify-center font-black text-xl animate-bounce shadow-lg";
                 b.innerText = Math.floor(Math.random()*n)+1; v.appendChild(b);
             }
         }
 
-        function calc(){
-            document.getElementById('pVal').innerText = p;
-            document.getElementById('profit').innerText = (profit>=0?'+':'')+profit+' Ar';
+        function calc() {
             const solde = parseInt(document.getElementById('solde').value) || 0;
             const target = parseInt(document.getElementById('targetGain').value) || 1500;
-            
-            // Sécurité : blocage si objectif atteint
-            if(profit >= target) {
-                document.getElementById('disciplineLock').classList.remove('hidden');
+            const lossLimit = -(parseInt(document.getElementById('stopLoss').value) || 2000);
+
+            document.getElementById('pVal').innerText = p;
+            document.getElementById('profit').innerText = (profit>=0?'+':'') + profit + ' Ar';
+            document.getElementById('profit').className = profit >= 0 ? "text-2xl font-black text-green-400" : "text-2xl font-black text-red-400";
+
+            // BLOCAGE DISCIPLINE
+            if (profit >= target) {
+                showLock("OBJECTIF ATTEINT", "Tu as gagné ton argent. Retire tout et éteins le jeu !", "fa-check-circle", "text-green-500");
+            } else if (profit <= lossLimit) {
+                showLock("STOP-LOSS ATTEINT", "Tu as perdu ta limite autorisée. Arrête-toi avant de tout vider !", "fa-times-circle", "text-red-500");
             }
 
             let m = Math.max(400, Math.floor(solde * 0.08));
             document.getElementById('mSugg').innerText = (solde < 400 ? 0 : m) + " Ar";
         }
 
-        function log(win){
+        function showLock(title, msg, icon, colorClass) {
+            const lock = document.getElementById('disciplineLock');
+            document.getElementById('lockTitle').innerText = title;
+            document.getElementById('lockMsg').innerText = msg;
+            const i = document.getElementById('lockIcon');
+            i.className = `fas ${icon} text-7xl mb-6 ${colorClass}`;
+            lock.classList.remove('hidden');
+        }
+
+        function log(win) {
             const m = parseInt(document.getElementById('mSugg').innerText);
             const val = win ? Math.floor(m * Math.pow(1.3, p)) - m : -m;
             profit += val;
-            logs.unshift({ win, val, p });
-            localStorage.setItem('d_logs', JSON.stringify(logs));
-            localStorage.setItem('d_profit', profit);
+            localStorage.setItem('v4_profit', profit);
             calc();
         }
 
-        function reset(){ if(confirm("Nouvelle session ?")){ localStorage.clear(); profit=0; logs=[]; location.reload(); }}
-        window.onload=calc;
+        function reset() { if(confirm("Nouvelle session ?")) { localStorage.clear(); profit=0; location.reload(); } }
+        window.onload = calc;
     </script>
 </body>
 </html>
